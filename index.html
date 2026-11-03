@@ -182,6 +182,9 @@ textarea{width:100%;min-height:3.4em;resize:vertical}
 <header id="bar">
   <div id="demo">デモ版</div>
   <div class="grow"></div>
+  <button class="barBtn" id="fsBtn" type="button" aria-label="全画面">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path id="fsIcon" d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg><span id="fsLbl">全画面</span>
+  </button>
   <button class="barBtn" id="recBtn" type="button" aria-label="記録">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 4h10v16H7z" fill="none"/><path d="M10 8h4M10 12h4M10 16h2"/></svg><span>記録</span>
   </button>
@@ -681,6 +684,29 @@ window.addEventListener('keyup', e=>{ if(isSpace(e) && !anySheetOpen()){ e.preve
 // 画面をクリックしたらキー操作を受け取れるようにする
 document.addEventListener('pointerdown', ()=>{ try{ window.focus(); }catch(e){} });
 document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ ['resSheet','recSheet','confirmBox'].forEach(id=>$(id).hidden=true); if(S.configured) $('setSheet').hidden=true; } });
+
+// ===== 全画面 =====
+const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+function syncFs(){
+  const on = !!fsEl();
+  $('fsLbl').textContent = on ? '全画面を解除' : '全画面';
+  $('fsBtn').setAttribute('aria-label', on ? '全画面を解除' : '全画面');
+  $('fsIcon').setAttribute('d', on ? 'M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5' : 'M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5');
+}
+$('fsBtn').onclick = ()=>{
+  $('fsBtn').blur();
+  const d=document, el=d.documentElement;
+  try{
+    if(fsEl()){ (d.exitFullscreen||d.webkitExitFullscreen).call(d); }
+    else {
+      const req = el.requestFullscreen || el.webkitRequestFullscreen;
+      if(!req) throw new Error('none');
+      const p = req.call(el); if(p && p.catch) p.catch(()=>showConfirm('この画面では全画面にできません。ブラウザで直接開くと使えます。', null));
+    }
+  }catch(e){ showConfirm('この画面では全画面にできません。ブラウザで直接開くと使えます。', null); }
+};
+document.addEventListener('fullscreenchange', syncFs);
+document.addEventListener('webkitfullscreenchange', syncFs);
 
 // ===== 起動 =====
 load();
